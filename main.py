@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 import time
 import signal
 import sys
@@ -14,7 +14,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 # Fungsi untuk klaim seed
 def claim_seed(init_data):
-    url = "https://elb.seeddao.org/api/v1/give-first-egg"
+    url = "https://elb.seeddao.org/api/v1/seed/claim"  # URL baru
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Telegram-Data": init_data
@@ -22,11 +22,14 @@ def claim_seed(init_data):
 
     try:
         print(f"{Fore.YELLOW}Mengirim permintaan untuk klaim seed...")
-        response = requests.post(url, headers=headers)
+        response = scraper.post(url, headers=headers)
+        print(f"Response status code: {response.status_code}")
+        print(f"Response content: {response.text}")  # Cetak konten respons API
+        
         if response.status_code == 200:
             print(f"{Fore.GREEN}Klaim seed berhasil!")
         elif response.status_code == 403:
-            print(f"{Fore.RED}Klaim seed sudah dilakukan sebelumnya.")
+            print(f"{Fore.RED}Klaim seed sudah dilakukan sebelumnya atau akses ditolak.")
         else:
             print(f"{Fore.RED}Gagal klaim seed. Status code: {response.status_code}")
     except Exception as e:
@@ -45,6 +48,9 @@ def countdown(t):
 
 # Fungsi untuk menjalankan program
 def main():
+    global scraper
+    scraper = cloudscraper.create_scraper()  # Inisialisasi cloudscraper
+    
     print("============================")
     print(f"{Fore.CYAN}        SEED Auto Claim")
     print(f"{Fore.CYAN}   Channel : t.me/ugdairdrop")
@@ -54,12 +60,16 @@ def main():
     with open('init_data.txt', 'r') as file:
         init_data = file.read().strip()
 
+    # Input waktu countdown sekali saja
+    countdown_hours = float(input("Masukkan waktu countdown (dalam jam): "))
+    countdown_seconds = int(countdown_hours * 3600)
+
     while True:
         try:
-            # Klaim seed setiap 4 jam
+            # Klaim seed
             claim_seed(init_data)
-            print(f"{Fore.CYAN}Menunggu 4 jam sebelum klaim seed berikutnya...")
-            countdown(4 * 60 * 60)  # Tunggu 4 jam
+            print(f"{Fore.CYAN}Menunggu {countdown_hours} jam sebelum klaim seed berikutnya...")
+            countdown(countdown_seconds)  # Tunggu waktu yang ditentukan
         except Exception as e:
             print(f"{Fore.RED}Program terhenti secara tidak terduga: {e}")
             break
